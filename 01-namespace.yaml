@@ -4,5 +4,5 @@ metadata:
   name: roboshop
   lables: 
     project: roboshop
-    environment: prod
+    environment: dev
   
