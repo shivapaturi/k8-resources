@@ -34,7 +34,6 @@ metadata:
   labels:
     purpose: ebs-static-demo
     project: roboshop
-    environment: dev
 spec:
   nodeSelector:
     topology.kubernetes.io/zone: us-east-1c
@@ -57,15 +56,11 @@ metadata:
   labels:
     purpose: ebs-static-demo
     project: roboshop
-    environment: dev
-
 spec:
   type: LoadBalancer
   selector:
     purpose: ebs-static-demo
     project: roboshop
-    environment: dev
-
   ports:
     - protocol: TCP
       port: 80 # service port
