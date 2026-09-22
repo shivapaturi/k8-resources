@@ -5,5 +5,3 @@ metadata:
 reclaimPolicy: Retain
 provisioner: ebs.csi.aws.com
 volumeBindingMode: WaitForFirstConsumer # disk will be created when pod is getting created
-
--
