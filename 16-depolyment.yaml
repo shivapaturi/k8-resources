@@ -38,11 +38,11 @@ kind: Service
 metadata:
   name: nginx-svc
   labels:
-    purpose: deployment-demo
+    purpose: service-demo
 
 spec:
   selector:
-    purpose: service-demo
+    purpose: deployment-demo
     project: roboshop
     app: nginx
 
