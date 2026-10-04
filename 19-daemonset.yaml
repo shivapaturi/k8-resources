@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: roboshop
+  labels:
+    app: node-exporter
+    project: roboshop
+spec:
+  # Pods with these labels belong to this DaemonSet (must match template labels)
+  selector:
+    matchLabels:
+      app: node-exporter
+  # Update one node at a time
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+        project: roboshop
+    spec:
+      hostNetwork: true   # expose metrics on the node's own IP
+      hostPID: true       # lets the exporter see node processes
+      # Run on every node, including tainted ones (spot, control-plane, etc.)
+      # To skip tainted nodes, delete this block.
+      tolerations:
+      - operator: Exists
+      containers:
+      - name: node-exporter
+        image: quay.io/prometheus/node-exporter:v1.8.2
+        args:
+        - --path.rootfs=/host
+        - --web.listen-address=:9100
+        ports:
+        - name: metrics
+          containerPort: 9100
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 20m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+        volumeMounts:
+        - name: root
+          mountPath: /host
+          readOnly: true
+          mountPropagation: HostToContainer
+      volumes:
+      - name: root
+        hostPath:
+          path: /
