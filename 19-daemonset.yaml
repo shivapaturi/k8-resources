@@ -1,55 +1,47 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: node-exporter
-  namespace: roboshop
+  name: fluentd-elasticsearch
+  namespace: kube-system
   labels:
-    app: node-exporter
-    project: roboshop
+    k8s-app: fluentd-logging
 spec:
-  # Pods with these labels belong to this DaemonSet (must match template labels)
   selector:
     matchLabels:
-      app: node-exporter
-  # Update one node at a time
-  updateStrategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
+      name: fluentd-elasticsearch
   template:
     metadata:
       labels:
-        app: node-exporter
-        project: roboshop
+        name: fluentd-elasticsearch
     spec:
-      hostNetwork: true   # expose metrics on the node's own IP
-      hostPID: true       # lets the exporter see node processes
-      # Run on every node, including tainted ones (spot, control-plane, etc.)
-      # To skip tainted nodes, delete this block.
       tolerations:
-      - operator: Exists
+      # these tolerations are to have the daemonset runnable on control plane nodes
+      # remove them if your control plane nodes should not run pods
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
       containers:
-      - name: node-exporter
-        image: quay.io/prometheus/node-exporter:v1.8.2
-        args:
-        - --path.rootfs=/host
-        - --web.listen-address=:9100
-        ports:
-        - name: metrics
-          containerPort: 9100
-          protocol: TCP
+      - name: fluentd-elasticsearch
+        # this pod collects the host logs and send them to ELK
+        image: quay.io/fluentd_elasticsearch/fluentd:v5.0.1
         resources:
-          requests:
-            cpu: 20m
-            memory: 32Mi
           limits:
-            memory: 64Mi
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
         volumeMounts:
-        - name: root
-          mountPath: /host
+        - name: varlog
+          mountPath: /var/log
           readOnly: true
-          mountPropagation: HostToContainer
+      # it may be desirable to set a high priority class to ensure that a DaemonSet Pod
+      # preempts running Pods
+      # priorityClassName: important
+      terminationGracePeriodSeconds: 30
       volumes:
-      - name: root
+      - name: varlog
         hostPath:
-          path: /
+          path: /var/log
